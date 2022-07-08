@@ -15,8 +15,9 @@ RSpec.describe DiscountRule do
   let(:product) { Product.new('Green Tea', 'GR1', 3.11) }
   let(:quantity) { 2 }
 
-  describe 'price_for' do
-    subject { described_class.new(product:, rule: Rules::FakeRule) }
+  subject { described_class.new(product:, rule: Rules::FakeRule) }
+
+  describe '.price_for' do
     it 'queries the associated rule for any discounted price' do
       expect(
         Rules::FakeRule
@@ -28,7 +29,17 @@ RSpec.describe DiscountRule do
       it 'in this case price * quantity' do
         expect(
           subject.price_for(quantity:)
-        ).to  eq(product.price * quantity)
+        ).to eq(product.price * quantity)
+      end
+    end
+  end
+
+  describe '#handles' do
+    context 'returns true when product_code matches associated product' do
+      let(:product_code) { product.product_code }
+
+      it 'returns true' do
+        expect(subject.handles?(product_code:)).to be_truthy
       end
     end
   end

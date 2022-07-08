@@ -13,6 +13,10 @@ class DiscountRule
     )
   end
 
+  def handles?(product_code:)
+    product.product_code == product_code
+  end
+
   private
 
   attr_reader :product, :rule
