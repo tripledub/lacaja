@@ -4,7 +4,9 @@ RSpec.describe Rules::BuyOneGetOneFree do
   let(:price) { 10 }
   let(:quantity) { 1 }
 
-  subject { described_class.price_for(price:, quantity:) }
+  subject do
+    described_class.price_for(price:, quantity:, discount_at: nil, new_price: nil)
+  end
 
   describe 'when quantity is 1 the price is the same' do
     it { is_expected.to eq(price) }

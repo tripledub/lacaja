@@ -1,11 +1,10 @@
 require_relative '../discount_rule'
-require 'pry'
 
 Product = Struct.new(:name, :product_code, :price)
 
 module Rules
   class FakeRule
-    def self.price_for(price:, quantity:)
+    def self.price_for(price:, quantity:, discount_at:, new_price:)
       price * quantity
     end
   end
@@ -21,7 +20,9 @@ RSpec.describe DiscountRule do
     it 'queries the associated rule for any discounted price' do
       expect(
         Rules::FakeRule
-      ).to receive(:price_for).with(price: product.price, quantity:)
+      ).to receive(:price_for).with(
+        price: product.price, quantity:, discount_at: nil, new_price: nil
+      )
       subject.price_for(quantity:)
     end
 
