@@ -17,7 +17,7 @@ RSpec.describe Rules::BuyOneGetOneFree do
     it { is_expected.to eq(price) }
   end
 
-  describe 'when quantity is 3 the 1 item is free' do
+  describe 'when quantity is 3, 1 item is free' do
     let(:quantity) { 3 }
     it { is_expected.to eq(price * 2) }
   end

@@ -1,5 +1,4 @@
 require_relative '../checkout'
-require 'pry'
 
 Product = Struct.new(:name, :product_code, :price)
 
@@ -63,11 +62,29 @@ RSpec.describe Checkout do
     end
 
     let(:strawberries_rule) do
-      Rules::AbsolutePrice
+      DiscountRule.new(
+        product: strawberries,
+        rule: Rules::AbsolutePrice,
+        discount_at: 3,
+        new_price: 4.5
+      )
+    end
+
+    let(:coffee_rule) do
+      DiscountRule.new(
+        product: coffee,
+        rule: Rules::RationalPrice,
+        discount_at: 3,
+        new_price: Rational(3, 2)
+      )
     end
 
     let(:pricing_rules) do
-      [green_tea_rule]
+      [
+        green_tea_rule,
+        strawberries_rule,
+        coffee_rule
+      ]
     end
 
     context 'with no items' do
@@ -88,6 +105,113 @@ RSpec.describe Checkout do
           subject.scan(product_code: green_tea.product_code)
           expect(subject.items['GR1']).to eq(2)
           expect(subject.total).to eq(3.11)
+        end
+      end
+
+      context 'with 3 Green Teas' do
+        it 'equals 6.22 (Buy 1 Get 1 Free + 1 at normal price)' do
+          subject.scan(product_code: green_tea.product_code)
+          subject.scan(product_code: green_tea.product_code)
+          expect(subject.items['GR1']).to eq(3)
+          expect(subject.total).to eq(6.22)
+        end
+      end
+    end
+
+    context 'with 1 Strawberries' do
+      before { subject.scan(product_code: strawberries.product_code) }
+
+      it 'equals 5' do
+        expect(subject.total).to eq(5)
+      end
+
+      context 'with 2 Strawberries' do
+        it 'equals 10, price break not met' do
+          subject.scan(product_code: strawberries.product_code)
+          expect(subject.items['SR1']).to eq(2)
+          expect(subject.total).to eq(10)
+        end
+      end
+
+      context 'with 3 Strawberries' do
+        it 'equals 13.5, threshold met and price drops to 4.50' do
+          subject.scan(product_code: strawberries.product_code)
+          subject.scan(product_code: strawberries.product_code)
+          expect(subject.items['SR1']).to eq(3)
+          expect(subject.total).to eq(13.5)
+        end
+      end
+    end
+
+    context 'with 1 Coffee' do
+      before { subject.scan(product_code: coffee.product_code) }
+
+      it 'equals 11.23' do
+        expect(subject.total).to eq(11.23)
+      end
+
+      context 'with 2 Coffees' do
+        it 'equals 22.46, price break not met' do
+          subject.scan(product_code: coffee.product_code)
+          expect(subject.items['CF1']).to eq(2)
+          expect(subject.total).to eq(22.46)
+        end
+      end
+
+      context 'with 3 Coffees' do
+        it 'equals 22.46, threshold met and price drops to 2/3 of original' do
+          subject.scan(product_code: coffee.product_code)
+          subject.scan(product_code: coffee.product_code)
+          expect(subject.items['CF1']).to eq(3)
+          expect(subject.total).to eq(22.46)
+        end
+      end
+    end
+
+    describe 'combinations of items' do
+      before do
+        basket.each do |item|
+          subject.scan(product_code: item)
+        end
+      end
+
+      describe '3 Green Teas, 1 strawberry and 1 Coffee' do
+        let(:basket) { %w[GR1 SR1 GR1 GR1 CF1] }
+
+        it 'equals 22.45' do
+          expect(subject.total).to eq(22.45)
+        end
+      end
+
+      describe '2 Green Teas' do
+        let(:basket) { %w[GR1 GR1] }
+
+        it 'equals 3.11, Buy 1 - Get 1 Free' do
+          expect(subject.total).to eq(3.11)
+        end
+      end
+
+      describe '3 Strawberries and 1 Green Tea' do
+        let(:basket) { %w[SR1 SR1 GR1 SR1] }
+
+        it 'equals 16.61' do
+          expect(subject.total).to eq(16.61)
+        end
+      end
+
+      describe '3 Coffees, 1 Strawberry and 1 Green Tea' do
+        let(:basket) { %w[GR1 CF1 SR1 CF1 CF1] }
+
+        it 'equals 30.57' do
+          expect(subject.total).to eq(30.57)
+        end
+
+        context 'the items can be added in any order' do
+          let(:basket) { %w[GR1 CF1 SR1 CF1 CF1].shuffle }
+
+          it 'still equals 30.57' do
+            expect(subject.total).to eq(30.57)
+          end
         end
       end
     end
