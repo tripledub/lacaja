@@ -15,5 +15,9 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-          ruby -v
+
       - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Set up ruby environment
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
